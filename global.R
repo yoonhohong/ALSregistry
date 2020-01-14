@@ -39,7 +39,7 @@ fu = read_csv('ALS_Registry_Followup.csv',
                 FVC_percent = col_double(),
                 ALSFRS = col_integer(),
                 Mitos = col_factor()
-              ))
+              )) %>% remove_empty("rows")
 
 fu = fu %>% 
   group_by(Study_ID) %>%
@@ -58,6 +58,12 @@ event = read_csv('ALS_Registry_Event.csv',
                    Study_ID = col_character(),
                    Event = col_factor(), 
                    Date_event = col_date(format = "%Y.%m.%d")
-                 )) %>% remove_empty("rows")
+                 ))
+event = event[complete.cases(event),]
+
+# close = read_csv('ALS_Registry_')
+
+
+
 
 

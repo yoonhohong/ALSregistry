@@ -1,6 +1,7 @@
 library(shiny)
 
 library(DT)
+library(dplyr)
 library(ggplot2)
 library(plotly)
 
@@ -17,44 +18,40 @@ ui = fluidPage(
             dateInput("date_dx", "Diagnosis (since) # 5 years ago (default)", 
                       value = Sys.Date() - 365*5, format = "yyyy-mm-dd"), 
             sliderInput("fu_dur", "FU duration (>, months)", min = 0, max = 24, value = 12), 
-            dateInput("date_last_fu", "Latest FU (since) # recent 4 year (default)", 
-                      value = Sys.Date() - 365*4, format = "yyyy-mm-dd"), 
-            hr()
+            dateInput("date_fu_last", "Latest FU (since) # recent 4 year (default)", 
+                      value = Sys.Date() - 365*4, format = "yyyy-mm-dd")
         ),
-        column(6, 
+        column(5, 
                DTOutput('pt_list_tbl')
                )
-    ), 
+        ), 
     
     fluidRow(
-        column(6, 
+        column(4, 
+               h4("DX & FU Hx"), 
+               hr(),
+               h6(textOutput("date_dx"), style="color:red"), 
+               h6(textOutput("onset2dx")),  
+               h6(textOutput("onset_region")), 
+               h6(textOutput("fu_duration")), 
+               h6(textOutput("date_fu_last"), style="color:red"),
+               hr(), 
+               h6(textOutput("gastrostomy")), 
+               h6(textOutput("NIV")),
+               h6(textOutput("tracheostomy")), 
+               h6(textOutput("death")), 
+               hr(), 
+               h6(textOutput("Biobank"))
+               ), 
+        column(4, 
                h4("ALSFRS revised (total score)"),
                plotOutput("plot_alsfrs")),
-        column(6,
+        column(4,
                h4("FVC (% of predicted)"),
                plotOutput("plot_FVC"))
-            ), 
-    
-    fluidRow(
-        hr(),
-        column(4, 
-               h5(textOutput("date_dx")), 
-               h5(textOutput("onset2dx")),  
-               h5(textOutput("fu_duration")), 
-               h5(textOutput("onset_region"))
-        ), 
-        column(4, 
-               h5(textOutput("gastrostomy")), 
-               h5(textOutput("NIV")),
-               h5(textOutput("tracheostomy")), 
-               h5(textOutput("death"))
-        ), 
-        column(4, 
-               h5(textOutput("Biobank"))
-        )
+            )
     )
-)
-        
+
 
 server = function(input, output){
     
@@ -64,7 +61,7 @@ server = function(input, output){
                 intersect(subset(base, Dx %in% input$dx)$Study_ID, 
                           subset(fu, Visit_interval * 4 > input$fu_dur)$Study_ID), 
                 subset(dx, Date_dx > input$date_dx)$Study_ID),
-            subset(fu, Date_visit > input$date_last_fu)$Study_ID)
+            subset(fu, Date_visit > input$date_fu_last)$Study_ID)
     })
     
     output$pt_list_tbl = renderDT({
@@ -124,7 +121,7 @@ server = function(input, output){
 
     output$date_dx = renderText({
         temp = dx[dx$Study_ID %in% selected_id2(),]$Date_dx
-        paste("Date of Dx: ", format(temp, "%Y-%m"))
+        paste("Dx: ", format(temp, "%Y-%m"))
         })
     
     output$onset2dx = renderText({
@@ -133,6 +130,11 @@ server = function(input, output){
         paste("Time from onset to Dx (weeks): ", temp2)
         })
     
+    output$onset_region = renderText({
+        temp = dx[dx$Study_ID %in% selected_id2(),]$Onset_region
+        paste("Onset region: ", temp)
+    })
+    
     output$fu_duration = renderText({
         temp1 = fu[fu$Study_ID %in% selected_id2(),]
         temp2 = round(difftime(last(temp1$Date_visit), first(temp1$Date_visit),
@@ -140,35 +142,49 @@ server = function(input, output){
         paste("FU duration (weeks): ", temp2)
         })
     
-    output$onset_region = renderText({
-        temp = dx[dx$Study_ID %in% selected_id2(),]$Onset_region
-        paste("Onset region: ", temp)
+    output$date_fu_last = renderText({
+        temp1 = fu[fu$Study_ID %in% selected_id2(),]$Date_visit
+        paste("Last fu: ", last(temp1))
     })
-    
+
     output$gastrostomy = renderText({
-        temp = event[event$Study_ID %in% selected_id2(),]$Date_event
-        temp = ifelse(is.null(temp), "NA", temp)
-        paste("Gastrostomy (date): ", temp)
+        temp = event %>% 
+            filter(Study_ID %in% selected_id2()) %>%
+            filter(Event == "Gastrostomy")
+        if (dim(temp)[1] == 0) {
+            paste("Gastrostomy: ", NA)
+        } else {
+            paste("Gastrostomy: ", format(temp$Date_event, "%Y-%m-%d"))
+        }
     })
     
     output$NIV = renderText({
-        temp = event[event$Study_ID %in% selected_id2(),]$Date_event
-        temp = ifelse(is.null(temp), "NA", temp)
-        paste("NIV (date): ", temp)
+        temp = event %>% 
+            filter(Study_ID %in% selected_id2()) %>%
+            filter(Event == "NIV")
+        if (dim(temp)[1] == 0) {
+            paste("NIV: ", NA)
+        } else {
+            paste("NIV: ", format(temp$Date_event, "%Y-%m-%d"))
+        }
     })
     
-    output$tracheostomoy = renderText({
-        temp = event[event$Study_ID %in% selected_id2(),]$Date_event
-        temp = ifelse(is.null(temp), "NA", temp)
-        paste("Tracheostomy (date): ", temp)
+    output$tracheostomy = renderText({
+        temp = event %>% 
+            filter(Study_ID %in% selected_id2()) %>%
+            filter(Event == "Tracheostomy")
+        if (dim(temp)[1] == 0) {
+            paste("Tracheostomy: ", NA)
+        } else {
+            paste("Tracheostomy: ", format(temp$Date_event, "%Y-%m-%d"))
+        }
     })
     
     output$death = renderText({
         temp = event[event$Study_ID %in% selected_id2(),]$Date_event
         temp = ifelse(is.null(temp), "NA", temp)
-        paste("Death (date): ", temp)
+        paste("Death: ", temp)
     })
-    
 }
 
 shinyApp(ui, server)
