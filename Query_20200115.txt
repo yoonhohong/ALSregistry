@@ -1,0 +1,23 @@
+# Query
+2020-01-15
+
+file: Biobank2
+query:
+Sample_Bcode of some Provider_Ocode are weird. 
+for example, 
+Provider_Ocode = O000001750
+Sample_Bcode = 2.45E+13 ??? 
+it should be text format (for example, 24490417PLA01103), not number. 
+
+file: ALS_Registry_Biobank1
+query: 
+different Hosp_ID and Provider_Ocode with the same Study_ID 
+Study_ID = 1070 
+
+file: Biobank1 
+query: 
+all Provider_Ocode in Biobank2 file should be present in Biobank1 file as well, but some Provide_Ocode in Biobank2  is not present in Biobank1 file? 
+for example, Provider_Ocode == “O000003212” 
+Could you update Biobank1 and Biobank2 files. 
+
+#ALS registry#
