@@ -8,7 +8,7 @@ library(plotly)
 source("global.R")
 
 ui = fluidPage(
-    titlePanel("SNU ALS Registry"), 
+    titlePanel(paste("SNU ALS Registry", date_update_registry, sep = " ")), 
     fluidRow(
         column(4,  
             selectInput("dx", "Diagnosis", c("ALS", "PMA", "PLS", "PBP", 
@@ -16,16 +16,39 @@ ui = fluidPage(
                                              "MMN", "Others"), multiple = TRUE, 
                         selected = "ALS"), 
             dateInput("date_dx", "Diagnosis after", 
-                      value = Sys.Date() - 365*5, format = "yyyy-mm-dd"), 
-            numericInput("fu_dur", "FU duration (months) longer than", value = 12), 
+                      value = date_update_registry - 365*5, format = "yyyy-mm-dd"), 
             dateInput("date_fu_latest", "Latest FU after", 
-                      value = Sys.Date() - 365*4, format = "yyyy-mm-dd")
+                      value = date_update_registry - 365*4, format = "yyyy-mm-dd"), 
+            radioButtons("fu_dur", "FU duration (longer than)", 
+                         c("0 or longer" = 0,
+                           "12 wk (3 mo)" = 12, 
+                           "24 wk (6 mo)" = 24, 
+                           "48 wk (12 mo)" = 48, 
+                           "96 wk (24 mo)" = 96), 
+                         selected = 48), 
+            radioButtons("time_from_latest_visit", "Time from the latest visit (longer than)", 
+                         c("0 or longer" = 0, 
+                           "12 wk (3 mo)" = 12,
+                           "24 wk (6 mo)" = 24), 
+                         selected = 24),
+            selectInput("fu_status", "F/U status", 
+                        c("Undefined", "Death_or_tracheostomy",
+                          "Refer", "Lost_to_fu"), multiple = T, 
+                        selected = "Undefined")
         ),
+        
+        
         column(5, 
+               hr(),
                DTOutput('pt_list_tbl')
                )
         ), 
     
+    fluidRow(
+      p(class = 'text-center', downloadButton('filteredData', 'Download Filtered Data'))
+    ),
+    hr(),
+  
     fluidRow(
         column(4, 
                h4("DX & FU Hx"), 
@@ -55,20 +78,31 @@ ui = fluidPage(
             )
     )
 
-server = function(input, output){
+server = function(input, output, session){
     
     selected_id1 = reactive({
+      intersect(
         intersect(
+          intersect(
             intersect(
-                intersect(subset(base, Dx %in% input$dx)$Study_ID, 
-                          subset(fu, Visit_interval/4 > input$fu_dur)$Study_ID), 
-                subset(dx, Date_dx > input$date_dx)$Study_ID),
-            subset(fu, Date_visit > input$date_fu_latest)$Study_ID)
-    })
+              intersect(subset(base, Dx %in% input$dx)$Study_ID, 
+                        subset(fu, Visit_interval > input$fu_dur)$Study_ID), 
+              subset(dx, Date_dx > input$date_dx)$Study_ID),
+            subset(fu, Date_visit > input$date_fu_latest)$Study_ID),
+          subset(fu, Time_from_latest_visit > input$time_from_latest_visit)$Study_ID),
+        subset(close_with_latest_visit, Close_reason == input$fu_status)$Study_ID)
+      })
     
     output$pt_list_tbl = renderDT({
-        subset(base, Study_ID %in% selected_id1())
+        temp_tbl = subset(base, Study_ID %in% selected_id1())
+        temp_tbl
         }, selection = "single", rownames = FALSE)
+    
+    # download the filtered data
+    output$filteredData = downloadHandler('snuALSregistry_filtered.csv', 
+                                          content = function(file) {
+                                            temp_tbl = subset(base, Study_ID %in% selected_id1())
+                                            write.csv(temp_tbl, file, row.names = F)})
     
     selected_id2 = reactive({
         temp = subset(base, Study_ID %in% selected_id1())
