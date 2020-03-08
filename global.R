@@ -122,8 +122,6 @@ levels(close_with_latest_visit$Close_reason) = list(
     Refer = "Refer",
     Lost_to_fu = "Lost to f/u")
 
-
-
 bio1 = read_csv(Biobank1_file, 
                 col_types = cols(
                   Study_ID = col_factor(), 
@@ -146,11 +144,48 @@ ser = bio[grep("SER", bio$Sample_Bcode), ]
 buf = bio[grep("BUF", bio$Sample_Bcode), ]
 pla = bio[grep("PLA", bio$Sample_Bcode), ]
 csf = bio[grep("CSF", bio$Sample_Bcode), ]
+urn = bio[grep("URN", bio$Sample_Bcode), ]
 
 ser$visit_no = regmatches(ser$Sample_Bcode, regexpr("SER..", ser$Sample_Bcode))
 ser$visit_no = regmatches(ser$visit_no, regexpr("[0-9][0-9]", ser$visit_no))
 ser$visit_no = as.integer(ser$visit_no)
 
+ser_temp = ser %>%
+  group_by(Study_ID, Provider_Ocode, Hosp_ID, visit_no) %>%
+  summarize(Sample_count = n())
+
+pla$visit_no = regmatches(pla$Sample_Bcode, regexpr("PLA..", pla$Sample_Bcode))
+pla$visit_no = regmatches(pla$visit_no, regexpr("[0-9][0-9]", pla$visit_no))
+pla$visit_no = as.integer(pla$visit_no)
+
+pla_temp = pla %>%
+  group_by(Study_ID, Provider_Ocode, Hosp_ID, visit_no) %>%
+  summarize(Sample_count = n())
+
+
+buf$visit_no = regmatches(buf$Sample_Bcode, regexpr("BUF..", buf$Sample_Bcode))
+buf$visit_no = regmatches(buf$visit_no, regexpr("[0-9][0-9]", buf$visit_no))
+buf$visit_no = as.integer(buf$visit_no)
+
+buf_temp = buf %>%
+  group_by(Study_ID, Provider_Ocode, Hosp_ID, visit_no) %>%
+  summarize(Sample_count = n())
+
+csf$visit_no = regmatches(csf$Sample_Bcode, regexpr("CSF..", csf$Sample_Bcode))
+csf$visit_no = regmatches(csf$visit_no, regexpr("[0-9][0-9]", csf$visit_no))
+csf$visit_no = as.integer(csf$visit_no)
+
+csf_temp = csf %>%
+  group_by(Study_ID, Provider_Ocode, Hosp_ID, visit_no) %>%
+  summarize(Sample_count = n())
+
+urn$visit_no = regmatches(urn$Sample_Bcode, regexpr("URN..", urn$Sample_Bcode))
+urn$visit_no = regmatches(urn$visit_no, regexpr("[0-9][0-9]", urn$visit_no))
+urn$visit_no = as.integer(urn$visit_no)
+
+urn_temp = urn %>%
+  group_by(Study_ID, Provider_Ocode, Hosp_ID, visit_no) %>%
+  summarize(Sample_count = n())
 
 
 

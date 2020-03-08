@@ -67,7 +67,11 @@ ui = fluidPage(
                h5(textOutput("refer")), 
                h5(textOutput("lost_fu")), 
                hr(),
-               h5(textOutput("Biobank"))
+               h5(textOutput("SER")),
+               h5(textOutput("PLA")), 
+               h5(textOutput("BUF")),
+               h5(textOutput("CSF")),
+               h5(textOutput("URN"))
                ), 
         column(4, 
                h4("ALSFRS revised (total score)"),
@@ -292,6 +296,76 @@ server = function(input, output, session){
                 paste("Refer: ", format(temp$Date_close, "%Y.%m.%d"))
             }
         }
+    })
+    
+    output$SER = renderText({
+        if (is.null(selected_id2())) {
+            print("SER:")
+        } else {
+            temp = ser_temp %>%
+                filter(Study_ID %in% selected_id2()) 
+            if (dim(temp)[1] == 0) {
+                paste("SER: ", "None", sep = "")
+            } else {
+                paste("SER: ", 
+                      paste(temp$Sample_count, collapse = "+"))
+            }}
+      })
+    
+    output$PLA = renderText({
+      if (is.null(selected_id2())) {
+        print("PLA:")
+      } else {
+        temp = pla_temp %>%
+          filter(Study_ID %in% selected_id2()) 
+        if (dim(temp)[1] == 0) {
+          paste("PLA: ", "None", sep = "")
+        } else {
+          paste("PLA: ", 
+                paste(temp$Sample_count, collapse = "+"))
+        }}
+    })
+    
+    output$BUF = renderText({
+      if (is.null(selected_id2())) {
+        print("BUF:")
+      } else {
+        temp = buf_temp %>%
+          filter(Study_ID %in% selected_id2()) 
+        if (dim(temp)[1] == 0) {
+          paste("BUF: ", "None", sep = "")
+        } else {
+          paste("BUF: ", 
+                paste(temp$Sample_count, collapse = "+"))
+        }}
+    })
+    
+    output$CSF = renderText({
+      if (is.null(selected_id2())) {
+        print("CSF:")
+      } else {
+        temp = csf_temp %>%
+          filter(Study_ID %in% selected_id2()) 
+        if (dim(temp)[1] == 0) {
+          paste("CSF: ", "None", sep = "")
+        } else {
+          paste("CSF: ", 
+                paste(temp$Sample_count, collapse = "+"))
+        }}
+    })
+    
+    output$URN = renderText({
+      if (is.null(selected_id2())) {
+        print("URN:")
+      } else {
+        temp = urn_temp %>%
+          filter(Study_ID %in% selected_id2()) 
+        if (dim(temp)[1] == 0) {
+          paste("URN: ", "None", sep = "")
+        } else {
+          paste("URN: ", 
+                paste(temp$Sample_count, collapse = "+"))
+        }}
     })
 }
 
