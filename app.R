@@ -34,7 +34,10 @@ ui = fluidPage(
             selectInput("fu_status", "F/U status", 
                         c("Undefined", "Death_or_tracheostomy",
                           "Refer", "Lost_to_fu"), multiple = T, 
-                        selected = "Undefined")
+                        selected = "Undefined"), 
+            selectInput("bio", "Biorepository", 
+                        c("CSF", "SERUM", "PLASMA", "BUFFYCOAT", "URINE"), multiple = T, 
+                        selected = "CSF")
         ),
         
         
@@ -89,12 +92,14 @@ server = function(input, output, session){
         intersect(
           intersect(
             intersect(
-              intersect(subset(base, Dx %in% input$dx)$Study_ID, 
-                        subset(fu, Visit_interval > input$fu_dur)$Study_ID), 
-              subset(dx, Date_dx > input$date_dx)$Study_ID),
-            subset(fu, Date_visit > input$date_fu_latest)$Study_ID),
-          subset(fu, Time_from_latest_visit > input$time_from_latest_visit)$Study_ID),
-        subset(close_with_latest_visit, Close_reason == input$fu_status)$Study_ID)
+              intersect(
+                intersect(subset(base, Dx %in% input$dx)$Study_ID, 
+                          subset(fu, Visit_interval >= input$fu_dur)$Study_ID), 
+                subset(dx, Date_dx > input$date_dx)$Study_ID),
+              subset(fu, Date_visit > input$date_fu_latest)$Study_ID),
+            subset(fu, Time_from_latest_visit >= input$time_from_latest_visit)$Study_ID),
+          subset(close_with_latest_visit, Close_reason %in% input$fu_status)$Study_ID), 
+        subset(bio, sample %in% input$bio)$Study_ID)
       })
     
     output$pt_list_tbl = renderDT({

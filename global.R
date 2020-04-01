@@ -112,7 +112,7 @@ fu_latest = fu %>%
   mutate(Date_visit_latest = Date_visit) %>%
   select(Study_ID, Date_visit_latest)
 
-close_with_latest_visit = merge(close_all, fu_latest, all = T,
+close_with_latest_visit = merge(close_all, fu_latest, all.x = T,
                                 by = "Study_ID") 
 close_with_latest_visit$Close_reason = factor(
   close_with_latest_visit$Close_reason)
@@ -138,7 +138,16 @@ bio2 = read_csv(Biobank2_file,
 bio2 = bio2[complete.cases(bio2),]
 
 bio = merge(bio1, bio2, all.y = T, by = "Provider_Ocode")
+bio$Provider_Bcode = regmatches(bio$Sample_Bcode, regexpr("^........", bio$Sample_Bcode))
 # setdiff(bio2$Provider_Ocode, bio1$Provider_Ocode)
+bio <- bio %>%
+  mutate(sample = case_when(
+    grepl("SER", Sample_Bcode) ~ "SERUM", 
+    grepl("BUF", Sample_Bcode) ~ "BUFFYCOAT", 
+    grepl("PLA", Sample_Bcode) ~ "PLASMA", 
+    grepl("CSF", Sample_Bcode) ~ "CSF", 
+    grepl("URN", Sample_Bcode) ~ "URINE"
+  ))
 
 ser = bio[grep("SER", bio$Sample_Bcode), ]
 buf = bio[grep("BUF", bio$Sample_Bcode), ]
@@ -188,8 +197,23 @@ urn_temp = urn %>%
   summarize(Sample_count = n())
 
 
-
-
-
-
-
+# ser_sub = ser %>%
+#   filter(Provider_Bcode %in% pt_list) %>%
+#   select(Provider_Ocode, Provider_Bcode, Sample_Bcode, Hosp_ID, Study_ID)
+# 
+# unique(ser_sub$Study_ID)
+# 
+# pt_list1 = c("1030", "1060", "1086", "1117", "1145",
+#              "1166", "1167", "1181", "1125", "1231",
+#              "1251", "1321", "1322", "1329", "1332",
+#              "1342", "1343") # 17 patients
+# pt_list2 = c("1031", "1039", "1046", "1058",
+#              11872", "1236", "1316", "1390", 
+#              "1159", "1182") # 10 patients
+# pt_list_all = c(pt_list1, pt_list2)
+# ser_sub2 = ser %>%
+#   filter(Study_ID %in% pt_list_all) %>%
+#   select(Provider_Ocode, Provider_Bcode, Sample_Bcode, Hosp_ID, Study_ID)
+# ser_sub3 = ser_sub2[grep("SER01", ser_sub2$Sample_Bcode), ]
+# 
+# write.csv(ser_sub3, "SERUM_LIST_ALS.csv", row.names = F)
