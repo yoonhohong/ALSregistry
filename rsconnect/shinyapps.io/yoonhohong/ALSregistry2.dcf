@@ -5,9 +5,9 @@ account: yoonhohong
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1659370
-bundleId: 2861404
+bundleId: 2952677
 url: https://yoonhohong.shinyapps.io/ALSregistry2/
-when: 1583667884.34887
+when: 1585726210.97647
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: Query_20200115.txt|README.md
+ignoredFiles: .Rapp.history|Query_20200115.txt|README.md|SERUM_LIST_ALS_27_exomir.csv|SERUM_LIST_ALS.csv
