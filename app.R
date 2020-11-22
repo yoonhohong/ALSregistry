@@ -8,39 +8,45 @@ library(plotly)
 source("global.R")
 
 ui = fluidPage(
+  
     titlePanel(paste("SNU ALS Registry", date_update_registry, sep = " ")), 
+    
     fluidRow(
         column(4,  
-            selectInput("dx", "Diagnosis", c("ALS", "PMA", "PLS", "PBP", 
-                                             "FAS", "FLS", "SBMA", "BFA", 
-                                             "MMN", "Others"), multiple = TRUE, 
+            selectInput("dx", "Diagnosis", 
+                        c("ALS", "PMA", "PLS", "PBP", 
+                          "FAS", "FLS", "SBMA", "BFA", 
+                          "MMN", "Others"), 
+                        multiple = TRUE, 
                         selected = "ALS"), 
             dateInput("date_dx", "Diagnosis after", 
-                      value = date_update_registry - 365*5, format = "yyyy-mm-dd"), 
+                      value = date_update_registry - 365*5, 
+                      format = "yyyy-mm-dd"), 
             dateInput("date_fu_latest", "Latest FU after", 
-                      value = date_update_registry - 365*4, format = "yyyy-mm-dd"), 
+                      value = date_update_registry - 365*4, 
+                      format = "yyyy-mm-dd"), 
             radioButtons("fu_dur", "FU duration (longer than)", 
                          c("0 or longer" = 0,
                            "12 wk (3 mo)" = 12, 
                            "24 wk (6 mo)" = 24, 
                            "48 wk (12 mo)" = 48, 
                            "96 wk (24 mo)" = 96), 
-                         selected = 48), 
-            radioButtons("time_from_latest_visit", "Time from the latest visit (longer than)", 
+                         selected = 0), 
+            radioButtons("time_from_latest_visit", 
+                         "Time from the latest visit (longer than)", 
                          c("0 or longer" = 0, 
                            "12 wk (3 mo)" = 12,
                            "24 wk (6 mo)" = 24), 
-                         selected = 24),
+                         selected = 0),
             selectInput("fu_status", "F/U status", 
                         c("Undefined", "Death_or_tracheostomy",
                           "Refer", "Lost_to_fu"), multiple = T, 
                         selected = "Undefined"), 
             selectInput("bio", "Biorepository", 
-                        c("CSF", "SERUM", "PLASMA", "BUFFYCOAT", "URINE"), multiple = T, 
+                        c("CSF", "SERUM", "PLASMA", "BUFFYCOAT", "URINE"), 
+                        multiple = T, 
                         selected = "CSF")
         ),
-        
-        
         column(5, 
                hr(),
                DTOutput('pt_list_tbl')
@@ -88,18 +94,18 @@ ui = fluidPage(
 server = function(input, output, session){
     
     selected_id1 = reactive({
-      intersect(
-        intersect(
-          intersect(
-            intersect(
-              intersect(
-                intersect(subset(base, Dx %in% input$dx)$Study_ID, 
-                          subset(fu, Visit_interval >= input$fu_dur)$Study_ID), 
-                subset(dx, Date_dx > input$date_dx)$Study_ID),
-              subset(fu, Date_visit > input$date_fu_latest)$Study_ID),
-            subset(fu, Time_from_latest_visit >= input$time_from_latest_visit)$Study_ID),
-          subset(close_with_latest_visit, Close_reason %in% input$fu_status)$Study_ID), 
-        subset(bio, sample %in% input$bio)$Study_ID)
+        temp1 = subset(base, Dx %in% input$dx)$Study_ID
+        temp2 = subset(fu, Visit_interval >= input$fu_dur)$Study_ID
+        temp3 = subset(dx, Date_dx > input$date_dx)$Study_ID
+        temp4 = subset(fu, Date_visit > input$date_fu_latest)$Study_ID
+        temp5 = subset(fu, Time_from_latest_visit >= input$time_from_latest_visit)$Study_ID
+        temp6 = subset(close_with_latest_visit, Close_reason %in% input$fu_status)$Study_ID
+        temp7 = subset(bio, sample %in% input$bio)$Study_ID
+        temp8 = intersect(intersect(temp1, temp2), 
+                  intersect(temp3, temp4))
+        temp9 = intersect(temp5, temp6)
+        temp10 = intersect(temp8, temp9)
+        intersect(temp10, temp7)
       })
     
     output$pt_list_tbl = renderDT({
@@ -107,12 +113,12 @@ server = function(input, output, session){
         temp_tbl
         }, selection = "single", rownames = FALSE)
     
-    # download the filtered data
-    output$filteredData = downloadHandler('snuALSregistry_filtered.csv', 
+#    download the filtered data
+    output$filteredData = downloadHandler('snuALSregistry_filtered.csv',
                                           content = function(file) {
                                             temp_tbl = subset(base, Study_ID %in% selected_id1())
                                             write.csv(temp_tbl, file, row.names = F)})
-    
+
     selected_id2 = reactive({
         temp = subset(base, Study_ID %in% selected_id1())
         s = input$pt_list_tbl_rows_selected
@@ -122,7 +128,7 @@ server = function(input, output, session){
             temp[s,]$Study_ID
             }
         })
-    
+
     output$plot_alsfrs = renderPlot({
         temp = fu %>%
             filter(!is.na(ALSFRS))
@@ -130,20 +136,20 @@ server = function(input, output, session){
             filter(Study_ID %in% selected_id1())
         temp2 = temp %>%
             filter(Study_ID %in% selected_id2())
-        ggplot() + 
-            geom_line(data = temp1, 
-                      aes(x=Visit_interval, y=ALSFRS, group = Study_ID), 
-                   color="grey") + 
-            geom_line(data = temp2, 
-                      aes(x=Visit_interval, y=ALSFRS, group = Study_ID), color = "red") + 
-            geom_point(data = temp2, 
-                aes(x=Visit_interval, y=ALSFRS), color = "red") + 
-            theme_light(base_size = 16) + 
+        ggplot() +
+            geom_line(data = temp1,
+                      aes(x=Visit_interval, y=ALSFRS, group = Study_ID),
+                   color="grey") +
+            geom_line(data = temp2,
+                      aes(x=Visit_interval, y=ALSFRS, group = Study_ID), color = "red") +
+            geom_point(data = temp2,
+                aes(x=Visit_interval, y=ALSFRS), color = "red") +
+            theme_light(base_size = 16) +
             theme(legend.position = "none") +
             xlab("Time from enrollment (weeks)") +
             ylab("ALSFRS-R")
         })
-    
+
     output$plot_FVC = renderPlot({
         temp = fu %>%
             filter(!is.na(FVC_percent))
@@ -151,14 +157,14 @@ server = function(input, output, session){
             filter(Study_ID %in% selected_id1())
         temp2 = temp %>%
             filter(Study_ID %in% selected_id2())
-        ggplot() + 
-            geom_line(data = temp1, aes(x=Visit_interval, y=FVC_percent, group = Study_ID), 
-                      color="grey") + 
-            geom_line(data = temp2, 
-                      aes(x=Visit_interval, y=FVC_percent, group = Study_ID), color = "red") + 
-            geom_point(data = temp2, 
-                       aes(x=Visit_interval, y=FVC_percent), color = "red") + 
-            theme_light(base_size = 16) + 
+        ggplot() +
+            geom_line(data = temp1, aes(x=Visit_interval, y=FVC_percent, group = Study_ID),
+                      color="grey") +
+            geom_line(data = temp2,
+                      aes(x=Visit_interval, y=FVC_percent, group = Study_ID), color = "red") +
+            geom_point(data = temp2,
+                       aes(x=Visit_interval, y=FVC_percent), color = "red") +
+            theme_light(base_size = 16) +
             theme(legend.position = "none") +
             xlab("Time from enrollment (weeks)") +
             ylab("FVC (% of predicted)") + 
@@ -173,7 +179,7 @@ server = function(input, output, session){
             paste("Dx: ", format(temp$Date_dx, "%Y.%m"))
             }
         })
-    
+
     output$onset2dx = renderText({
         if (is.null(selected_id2())) {
             print("Time from onset to Dx (months): ")
@@ -183,7 +189,7 @@ server = function(input, output, session){
             paste("Time from onset to Dx (months): ", round(temp2/4))
             }
         })
-    
+
     output$onset_region = renderText({
         if (is.null(selected_id2())) {
             print("Onset region: ")
@@ -192,7 +198,7 @@ server = function(input, output, session){
             paste("Onset region: ", temp)
         }
         })
-    
+
     output$fu_duration = renderText({
         if (is.null(selected_id2)) {
             print("FU duration (months):")
@@ -203,7 +209,7 @@ server = function(input, output, session){
             paste("FU duration (months): ", round(temp2/4))
             }
         })
-    
+
     output$date_fu_latest = renderText({
         if (is.null(selected_id2())) {
             print("Latest FU: ")
@@ -217,7 +223,7 @@ server = function(input, output, session){
         if (is.null(selected_id2())) {
             print("Gastrostomy:")
         } else {
-            temp = event %>% 
+            temp = event %>%
                 filter(Study_ID %in% selected_id2()) %>%
                 filter(Event == "Gastrostomy")
             if (dim(temp)[1] == 0) {
@@ -227,12 +233,12 @@ server = function(input, output, session){
             }
         }
     })
-    
+
     output$NIV = renderText({
         if (is.null(selected_id2())) {
             print("NIV:")
         } else {
-            temp = event %>% 
+            temp = event %>%
                 filter(Study_ID %in% selected_id2()) %>%
                 filter(Event == "NIV")
             if (dim(temp)[1] == 0) {
@@ -242,12 +248,12 @@ server = function(input, output, session){
             }
         }
     })
-    
+
     output$tracheostomy = renderText({
         if (is.null(selected_id2())) {
             print("Tracheostomy:")
         } else {
-            temp = event %>% 
+            temp = event %>%
                 filter(Study_ID %in% selected_id2()) %>%
                 filter(Event == "Tracheostomy")
             if (dim(temp)[1] == 0) {
@@ -257,7 +263,7 @@ server = function(input, output, session){
             }
         }
     })
-    
+
     output$death = renderText({
         if (is.null(selected_id2())) {
             print("Death:")
@@ -272,7 +278,7 @@ server = function(input, output, session){
             }
         }
     })
-    
+
     output$lost_fu = renderText({
         if (is.null(selected_id2())) {
             print("Lost to f/u:")
@@ -287,7 +293,7 @@ server = function(input, output, session){
             }
         }
     })
-    
+
     output$refer = renderText({
         if (is.null(selected_id2())) {
             print("Refer:")
@@ -302,73 +308,73 @@ server = function(input, output, session){
             }
         }
     })
-    
+
     output$SER = renderText({
         if (is.null(selected_id2())) {
             print("SER:")
         } else {
             temp = ser_temp %>%
-                filter(Study_ID %in% selected_id2()) 
+                filter(Study_ID %in% selected_id2())
             if (dim(temp)[1] == 0) {
                 paste("SER: ", "None", sep = "")
             } else {
-                paste("SER: ", 
+                paste("SER: ",
                       paste(temp$Sample_count, collapse = "+"))
             }}
       })
-    
+
     output$PLA = renderText({
       if (is.null(selected_id2())) {
         print("PLA:")
       } else {
         temp = pla_temp %>%
-          filter(Study_ID %in% selected_id2()) 
+          filter(Study_ID %in% selected_id2())
         if (dim(temp)[1] == 0) {
           paste("PLA: ", "None", sep = "")
         } else {
-          paste("PLA: ", 
+          paste("PLA: ",
                 paste(temp$Sample_count, collapse = "+"))
         }}
     })
-    
+
     output$BUF = renderText({
       if (is.null(selected_id2())) {
         print("BUF:")
       } else {
         temp = buf_temp %>%
-          filter(Study_ID %in% selected_id2()) 
+          filter(Study_ID %in% selected_id2())
         if (dim(temp)[1] == 0) {
           paste("BUF: ", "None", sep = "")
         } else {
-          paste("BUF: ", 
+          paste("BUF: ",
                 paste(temp$Sample_count, collapse = "+"))
         }}
     })
-    
+
     output$CSF = renderText({
       if (is.null(selected_id2())) {
         print("CSF:")
       } else {
         temp = csf_temp %>%
-          filter(Study_ID %in% selected_id2()) 
+          filter(Study_ID %in% selected_id2())
         if (dim(temp)[1] == 0) {
           paste("CSF: ", "None", sep = "")
         } else {
-          paste("CSF: ", 
+          paste("CSF: ",
                 paste(temp$Sample_count, collapse = "+"))
         }}
     })
-    
+
     output$URN = renderText({
       if (is.null(selected_id2())) {
         print("URN:")
       } else {
         temp = urn_temp %>%
-          filter(Study_ID %in% selected_id2()) 
+          filter(Study_ID %in% selected_id2())
         if (dim(temp)[1] == 0) {
           paste("URN: ", "None", sep = "")
         } else {
-          paste("URN: ", 
+          paste("URN: ",
                 paste(temp$Sample_count, collapse = "+"))
         }}
     })

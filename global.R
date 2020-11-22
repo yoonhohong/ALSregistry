@@ -49,7 +49,7 @@ base = merge(base, dx, all.x = T, by = "Study_ID") %>%
   select(Study_ID, Hosp_ID, Sex, Age_dx, Dx)
 
 fu = read_csv(fu_file, 
-              col_types = cols(
+              col_types = cols_only(
                 Study_ID = col_factor(),
                 Date_visit = col_date(format = "%Y.%m.%d"), 
                 Wt = col_double(),
@@ -74,7 +74,7 @@ fu_fvc = fu %>%
   filter(!is.na(FVC_percent))
 
 event = read_csv(event_file,
-                 col_types = cols(
+                 col_types = cols_only(
                    Study_ID = col_factor(),
                    Event = col_factor(), 
                    Date_event = col_date(format = "%Y.%m.%d")
@@ -82,7 +82,7 @@ event = read_csv(event_file,
 event = event[complete.cases(event),]
 
 close = read_csv(close_file, 
-                 col_types = cols(
+                 col_types = cols_only(
                    Study_ID = col_factor(),
                    Close_reason = col_factor(),
                    Date_close = col_date(format = "%Y.%m.%d")
@@ -123,7 +123,7 @@ levels(close_with_latest_visit$Close_reason) = list(
     Lost_to_fu = "Lost to f/u")
 
 bio1 = read_csv(Biobank1_file, 
-                col_types = cols(
+                col_types = cols_only(
                   Study_ID = col_factor(), 
                   Hosp_ID = col_factor(),
                   Provider_Ocode = col_factor()
@@ -131,7 +131,7 @@ bio1 = read_csv(Biobank1_file,
 bio1 = bio1[complete.cases(bio1),]
 
 bio2 = read_csv(Biobank2_file, 
-                col_types = cols(
+                col_types = cols_only(
                   Provider_Ocode = col_factor(), 
                   Sample_Bcode = col_character()
                 ))
@@ -195,6 +195,8 @@ urn$visit_no = as.integer(urn$visit_no)
 urn_temp = urn %>%
   group_by(Study_ID, Provider_Ocode, Hosp_ID, visit_no) %>%
   summarize(Sample_count = n())
+
+
 
 
 # ser_sub = ser %>%
