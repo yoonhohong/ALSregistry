@@ -2,9 +2,6 @@
 # https://github.com/yoonhohong/ALSregistry
 # Shiny app for interactive case review 
 
-# Date of registry updated
-date_update_registry = Sys.Date()
-
 library(tidyverse)
 library(googlesheets4)
 
@@ -58,6 +55,15 @@ fu_wt = fu %>%
   filter(!is.na(Date_visit)) %>%
   group_by(Study_ID) %>%
   mutate(Visit_interval = as.numeric(Date_visit - min(Date_visit))/365*12)
+
+saveRDS(base, "data/base.rds")
+saveRDS(dx, "data/dx.rds")
+saveRDS(fu, "data/fu.rds")
+saveRDS(fu_alsfrs, "data/fu_alsfrs.rds")
+saveRDS(fu_fvc, "data/fu_fvc.rds")
+saveRDS(fu_wt, "data/fu_wt.rds")
+saveRDS(event, "data/event.rds")
+saveRDS(close, "data/close.rds")
 
 
 # biorepository 

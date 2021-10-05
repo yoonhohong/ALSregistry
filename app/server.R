@@ -1,10 +1,6 @@
-# 
+# ALS Registry 
 
-source("global.R")
-
-conditional <- function(condition, success) {
-  if (condition) success else TRUE
-}
+source("helper.R")
 
 server = function(input, output){
   
