@@ -1,5 +1,6 @@
 # ALS Registry 
 
+library(tidyverse)
 source("helper.R")
 
 server = function(input, output){
@@ -13,8 +14,8 @@ server = function(input, output){
   # input$range_date_enrollment
   selected_id2 = reactive({
     dx %>%
-      filter(Date_enrollment >= input$range_date_dx[1]) %>%
-      filter(Date_enrollment <= input$range_date_dx[2]) %>%
+      filter(Date_enrollment >= input$range_date_enrollment[1]) %>%
+      filter(Date_enrollment <= input$range_date_enrollment[2]) %>%
       select(Study_ID)
     })
     

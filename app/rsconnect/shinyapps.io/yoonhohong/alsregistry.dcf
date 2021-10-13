@@ -5,9 +5,9 @@ account: yoonhohong
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4802165
-bundleId: 5106647
+bundleId: 5130647
 url: https://yoonhohong.shinyapps.io/alsregistry/
-when: 1633447103.29863
+when: 1634042984.53207
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: global.R
