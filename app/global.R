@@ -22,9 +22,19 @@ dx = within(dx, {
 })
 fu = within(fu, {
   Date_visit = as.Date(Date_visit, format = "%Y-%m-%d")
+  Date_FVC = as.Date(Date_FVC, format = "%Y-%m-%d")
 })
 event$Date_event = as.Date(event$Date_event, format = "%Y-%m-%d")
+event$Event = factor(event$Event)
 close$Date_close = as.Date(close$Date_close, format = "%Y-%m-%d")
+close$Close_reason = factor(close$Close_reason)
+
+# data cleaning 
+# base
+# dx
+# fu
+# event
+# close 
 
 # age at dx 
 dx = dx %>%
@@ -36,25 +46,125 @@ base = dx %>%
   inner_join(base, by = "Study_ID") %>%
   select(Study_ID, Hosp_ID, Name, Sex, Dx, Age_dx)
 
+# dx, fu, event, and close 
+dx_temp = dx %>%
+  select(Study_ID, Date_enrollment) %>%
+  rename(Date = Date_enrollment) %>%
+  mutate(Milestone = "enrolled")
+
+fu_temp = fu %>%
+  select(Study_ID, Date_visit) %>%
+  rename(Date = Date_visit) %>%
+  mutate(Milestone = "fu")
+
+dx_fu = rbind(dx_temp, fu_temp) 
+dx_fu %>%
+  group_by(Study_ID, Date) %>%
+  summarise(n = n()) %>%
+  filter(n > 1) -> temp 
+dx_fu %>%
+  inner_join(temp, by = c("Study_ID", "Date")) %>%
+  arrange(Study_ID, Date) %>%
+  filter(Milestone == "fu") -> temp2
+dx_fu2 = dx_fu %>%
+  anti_join(temp2, by = c("Study_ID", "Date")) 
+dx_fu2 %>%
+  group_by(Study_ID, Date) %>%
+  summarise(n = n()) %>%
+  filter(n > 1) 
+
+event_temp = event %>%
+  select(Study_ID, Date_event, Event) %>%
+  rename(Date = Date_event, Milestone = Event) %>%
+  filter(!is.na(Date))
+event %>%
+  filter(is.na(Date_event))
+
+dx_fu2_event = rbind(dx_fu2, event_temp)
+dx_fu2_event %>%
+  group_by(Study_ID, Date) %>%
+  summarise(n = n()) %>%
+  filter(n > 1) -> temp3 
+dx_fu2_event %>%
+  inner_join(temp3, by = c("Study_ID", "Date")) %>%
+  arrange(Study_ID, Date) -> temp4 
+data.frame(temp4) %>%
+  filter(!(Milestone == "fu"))
+
+close_temp = close %>%
+  select(Study_ID, Date_close, Close_reason) %>%
+  rename(Date = Date_close, Milestone = Close_reason)
+
+close_temp %>%
+  group_by(Study_ID, Date) %>%
+  summarise(n = n()) %>%
+  filter(n > 1)
+
+course = rbind(dx_fu2_event, close_temp)
+
+# ALSFRS, FVC, Wt longitudinal change 
+fu1 = fu %>%
+  select(Study_ID, Date_visit, Wt, ALSFRS) %>%
+  filter(!(is.na(Wt) & is.na(ALSFRS))) 
+fu2 = fu %>%
+  select(Study_ID, Date_FVC, FVC) %>%
+  filter(!is.na(Date_FVC)) %>%
+  rename(Date_visit = Date_FVC)
+fu = fu1 %>%
+  full_join(fu2, by = c("Study_ID", "Date_visit")) %>%
+  rename(Date = Date_visit) %>%
+  mutate(Milestone = "fu")
+
+dx1 = dx %>%
+  select(Study_ID, Date_enrollment, Wt_enr, ALSFRS) %>%
+  rename(Date = Date_enrollment, Wt = Wt_enr) %>%
+  mutate(FVC = NA, Milestone = "enrolled")
+dx1$FVC = as.numeric(dx1$FVC)
+
+fu3 = rbind(fu, dx1)
+fu3 = fu3 %>% 
+  select(-Milestone) %>%
+  filter(!(is.na(Wt) & is.na(ALSFRS) & is.na(FVC))) %>%
+  distinct()
+
+fu3 %>%
+  group_by(Study_ID, Date) %>%
+  summarise(n = n()) %>%
+  filter(n > 1) -> temp 
+
+fu3 %>% 
+  inner_join(temp, by = c("Study_ID", "Date")) %>%
+  arrange(Study_ID, Date) -> temp2
+data.frame(temp2) %>% select(-n)
+
+fu4 = fu3 %>% 
+  anti_join(temp2, by = c("Study_ID", "Date")) %>%
+  arrange(Study_ID) 
+fu4 %>%
+  group_by(Study_ID, Date) %>%
+  summarise(n = n()) %>%
+  filter(n > 1)
+
+fu = fu4
+
 # fu_alsfrs 
 fu_alsfrs = fu %>%
   filter(!is.na(ALSFRS)) %>%
-  filter(!is.na(Date_visit)) %>%
   group_by(Study_ID) %>%
-  mutate(Visit_interval = as.numeric(Date_visit - min(Date_visit))/365*12)
+  mutate(Visit_interval = as.numeric(Date - min(Date))/365*12)
 
 # fu_fvc 
 fu_fvc = fu %>% 
-  filter(!is.na(FVC_percent)) %>%
-  filter(!is.na(Date_visit)) %>%
+  filter(!is.na(FVC)) %>%
   group_by(Study_ID) %>%
-  mutate(Visit_interval = as.numeric(Date_visit - min(Date_visit))/365*12)
+  mutate(Visit_interval = as.numeric(Date - min(Date))/365*12)
+
 
 fu_wt = fu %>% 
   filter(!is.na(Wt)) %>%
-  filter(!is.na(Date_visit)) %>%
   group_by(Study_ID) %>%
-  mutate(Visit_interval = as.numeric(Date_visit - min(Date_visit))/365*12)
+  mutate(Visit_interval = as.numeric(Date - min(Date))/365*12)
+
 
 saveRDS(base, "data/base.rds")
 saveRDS(dx, "data/dx.rds")
@@ -64,7 +174,7 @@ saveRDS(fu_fvc, "data/fu_fvc.rds")
 saveRDS(fu_wt, "data/fu_wt.rds")
 saveRDS(event, "data/event.rds")
 saveRDS(close, "data/close.rds")
-
+saveRDS(course, "data/course.rds")
 
 # biorepository 
 # bio = merge(bio1, bio2, all.y = T, by = "Provider_Ocode")

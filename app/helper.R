@@ -8,6 +8,7 @@ fu_fvc = readRDS("data/fu_fvc.rds")
 fu_wt = readRDS("data/fu_wt.rds")
 event = readRDS("data/event.rds")
 close = readRDS("data/close.rds")
+course = readRDS("data/course.rds")
 
 # define function 
 conditional <- function(condition, success) {

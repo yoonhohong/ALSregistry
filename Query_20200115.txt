@@ -21,3 +21,16 @@ for example, Provider_Ocode == “O000003212”
 Could you update Biobank1 and Biobank2 files. 
 
 #ALS registry#
+
+
+# Query 
+2021-10-13
+
+등록(enrollment) 시점에서 Dx 테이블을 작성할 때, FU 테이블도 작성해야 함. 
+: Dx 테이블에는 FVC 와 Wt 데이터가 없음 
+: FU 테이블에서 Dx 테이블과 겹치는 변수들을 제거할 필요가 있을지 다시 고민(Fu 중에 변화를 알기 위해서인데...) 
+: DX 테이블에 FVC 와 Wt, Height 데이터를 추가할 것을 고려해야 함. 
+
+
+
+ 

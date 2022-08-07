@@ -5,9 +5,10 @@ account: yoonhohong
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4802165
-bundleId: 5130647
+bundleId: 6174208
 url: https://yoonhohong.shinyapps.io/alsregistry/
-when: 1634042984.53207
+when: 1659780674.28758
+lastSyncTime: 1659780674.28759
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: global.R
+ignoredFiles: audit.R|global.R
